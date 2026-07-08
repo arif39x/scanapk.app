@@ -22,6 +22,8 @@ object Routes {
 @Composable
 fun AppNavigation(
     navController: NavHostController,
+    isDarkMode: Boolean = false,
+    onToggleDarkMode: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -46,7 +48,10 @@ fun AppNavigation(
         }
 
         composable(Routes.SETTINGS) {
-            SettingsScreen()
+            SettingsScreen(
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = onToggleDarkMode,
+            )
         }
     }
 }

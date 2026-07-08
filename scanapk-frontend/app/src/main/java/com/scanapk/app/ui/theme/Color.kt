@@ -55,6 +55,13 @@ val Background = Color(0xFFF8F9FA)
 val OnBackground = Color(0xFF191C1D)
 val SurfaceVariant = Color(0xFFE1E3E4)
 
+val DarkSurface = Color(0xFF1A1C1E)
+val DarkOnSurface = Color(0xFFE1E3E4)
+val DarkOnSurfaceVariant = Color(0xFFC1C6D6)
+val DarkSurfaceVariant = Color(0xFF414754)
+val DarkBackground = Color(0xFF1A1C1E)
+val DarkOnBackground = Color(0xFFE1E3E4)
+
 val SeveritySafe = Color(0xFF34A853)
 val SeveritySafeBg = Color(0xFFE6F4EA)
 val SeverityLow = Color(0xFFFBBC04)

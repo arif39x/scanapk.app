@@ -90,7 +90,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (isScanning) "Scanning..." else "Start New Scan",
+                            text = if (isScanning) "Scanning..." else "Upload APK",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                         )

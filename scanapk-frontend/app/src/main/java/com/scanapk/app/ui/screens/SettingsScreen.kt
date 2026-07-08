@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
@@ -36,7 +35,10 @@ import com.scanapk.app.ui.theme.OnSurfaceVariant
 import com.scanapk.app.ui.theme.Primary
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    isDarkMode: Boolean = false,
+    onToggleDarkMode: () -> Unit = {},
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -67,12 +69,6 @@ fun SettingsScreen() {
                     subtitle = "Save scan reports locally",
                     checked = true,
                 )
-                SettingToggle(
-                    icon = Icons.Outlined.BugReport,
-                    title = "Deep Analysis",
-                    subtitle = "Perform thorough malware analysis",
-                    checked = false,
-                )
             }
         }
 
@@ -88,7 +84,8 @@ fun SettingsScreen() {
                     icon = Icons.Outlined.DarkMode,
                     title = "Dark Theme",
                     subtitle = "Use dark color scheme",
-                    checked = false,
+                    checked = isDarkMode,
+                    onCheckedChange = { onToggleDarkMode() },
                 )
                 SettingToggle(
                     icon = Icons.Outlined.Palette,
@@ -124,6 +121,7 @@ private fun SettingToggle(
     title: String,
     subtitle: String,
     checked: Boolean,
+    onCheckedChange: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -152,7 +150,7 @@ private fun SettingToggle(
         }
         Switch(
             checked = checked,
-            onCheckedChange = {},
+            onCheckedChange = { onCheckedChange() },
             colors = SwitchDefaults.colors(
                 checkedTrackColor = Primary,
             ),
