@@ -12,16 +12,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,79 +26,58 @@ import com.scanapk.app.model.Severity
 import com.scanapk.app.model.Vulnerability
 import com.scanapk.app.ui.components.ScanCard
 import com.scanapk.app.ui.components.SeverityChip
-import com.scanapk.app.ui.theme.OnSurface
 import com.scanapk.app.ui.theme.OnSurfaceVariant
 import com.scanapk.app.ui.theme.Primary
-import com.scanapk.app.ui.theme.Surface
+import com.scanapk.app.ui.theme.SeverityCritical
+import com.scanapk.app.ui.theme.SeverityHigh
+import com.scanapk.app.ui.theme.SeverityLow
+import com.scanapk.app.ui.theme.SeverityMedium
+import com.scanapk.app.ui.theme.SeveritySafe
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanResultScreen(
     scanResult: ScanResult = sampleResult,
-    onBack: () -> Unit = {},
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Scan Results", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                ),
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            ScoreCard(scanResult = scanResult)
+        }
+
+        item {
+            SeverityBreakdown(severityCounts = scanResult.severityCounts)
+        }
+
+        item {
+            Text(
+                text = "Vulnerabilities",
+                style = MaterialTheme.typography.headlineSmall,
             )
-        },
-        containerColor = Surface,
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+        }
+
+        items(scanResult.vulnerabilities) { vuln ->
+            VulnerabilityCard(vulnerability = vuln)
+        }
+
+        if (scanResult.vulnerabilities.isEmpty()) {
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                ScoreCard(scanResult = scanResult)
-            }
-
-            item {
-                SeverityBreakdown(severityCounts = scanResult.severityCounts)
-            }
-
-            item {
-                Text(
-                    text = "Vulnerabilities",
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            }
-
-            items(scanResult.vulnerabilities) { vuln ->
-                VulnerabilityCard(vulnerability = vuln)
-            }
-
-            if (scanResult.vulnerabilities.isEmpty()) {
-                item {
-                    ScanCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "No vulnerabilities found",
-                            color = OnSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 8.dp),
-                        )
-                    }
+                ScanCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "No vulnerabilities found",
+                        color = OnSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
                 }
             }
+        }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -120,11 +92,11 @@ private fun ScoreCard(scanResult: ScanResult) {
                 fontWeight = FontWeight.Light,
                 letterSpacing = (-0.02).sp,
                 color = when {
-                    scanResult.overallScore >= 80 -> com.scanapk.app.ui.theme.SeveritySafe
-                    scanResult.overallScore >= 60 -> com.scanapk.app.ui.theme.SeverityLow
-                    scanResult.overallScore >= 40 -> com.scanapk.app.ui.theme.SeverityMedium
-                    scanResult.overallScore >= 20 -> com.scanapk.app.ui.theme.SeverityHigh
-                    else -> com.scanapk.app.ui.theme.SeverityCritical
+                    scanResult.overallScore >= 80 -> SeveritySafe
+                    scanResult.overallScore >= 60 -> SeverityLow
+                    scanResult.overallScore >= 40 -> SeverityMedium
+                    scanResult.overallScore >= 20 -> SeverityHigh
+                    else -> SeverityCritical
                 },
             )
             Text(

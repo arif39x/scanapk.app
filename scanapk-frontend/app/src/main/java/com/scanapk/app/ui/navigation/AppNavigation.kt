@@ -34,28 +34,19 @@ fun AppNavigation(
                 onNavigateToResult = { scanId ->
                     navController.navigate(Routes.scanResult(scanId))
                 },
-                onNavigateToApkDetails = {
-                    navController.navigate(Routes.APK_DETAILS)
-                },
             )
         }
 
         composable(Routes.SCAN_RESULT) {
-            ScanResultScreen(
-                onBack = { navController.popBackStack() },
-            )
+            ScanResultScreen()
         }
 
         composable(Routes.APK_DETAILS) {
-            ApkDetailsScreen(
-                onBack = { navController.popBackStack() },
-            )
+            ApkDetailsScreen()
         }
 
         composable(Routes.SETTINGS) {
-            SettingsScreen(
-                onBack = { navController.popBackStack() },
-            )
+            SettingsScreen()
         }
     }
 }

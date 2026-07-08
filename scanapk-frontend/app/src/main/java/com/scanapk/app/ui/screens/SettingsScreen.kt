@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Info
@@ -20,16 +19,11 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,115 +32,88 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scanapk.app.ui.components.ScanCard
-import com.scanapk.app.ui.theme.OnSurface
 import com.scanapk.app.ui.theme.OnSurfaceVariant
 import com.scanapk.app.ui.theme.Primary
-import com.scanapk.app.ui.theme.Surface
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
-    onBack: () -> Unit = {},
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                ),
-            )
-        },
-        containerColor = Surface,
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+fun SettingsScreen() {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
-            item {
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Scan Configuration",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    SettingToggle(
-                        icon = Icons.Outlined.Notifications,
-                        title = "Notifications",
-                        subtitle = "Get notified when scan completes",
-                        checked = true,
-                    )
-                    SettingToggle(
-                        icon = Icons.Outlined.Storage,
-                        title = "Auto-save Reports",
-                        subtitle = "Save scan reports locally",
-                        checked = true,
-                    )
-                    SettingToggle(
-                        icon = Icons.Outlined.BugReport,
-                        title = "Deep Analysis",
-                        subtitle = "Perform thorough malware analysis",
-                        checked = false,
-                    )
-                }
+        item {
+            ScanCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Scan Configuration",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingToggle(
+                    icon = Icons.Outlined.Notifications,
+                    title = "Notifications",
+                    subtitle = "Get notified when scan completes",
+                    checked = true,
+                )
+                SettingToggle(
+                    icon = Icons.Outlined.Storage,
+                    title = "Auto-save Reports",
+                    subtitle = "Save scan reports locally",
+                    checked = true,
+                )
+                SettingToggle(
+                    icon = Icons.Outlined.BugReport,
+                    title = "Deep Analysis",
+                    subtitle = "Perform thorough malware analysis",
+                    checked = false,
+                )
             }
+        }
 
-            item {
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Appearance",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    SettingToggle(
-                        icon = Icons.Outlined.DarkMode,
-                        title = "Dark Theme",
-                        subtitle = "Use dark color scheme",
-                        checked = false,
-                    )
-                    SettingToggle(
-                        icon = Icons.Outlined.Palette,
-                        title = "Dynamic Colors",
-                        subtitle = "Use Material You color theme",
-                        checked = true,
-                    )
-                }
+        item {
+            ScanCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Appearance",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingToggle(
+                    icon = Icons.Outlined.DarkMode,
+                    title = "Dark Theme",
+                    subtitle = "Use dark color scheme",
+                    checked = false,
+                )
+                SettingToggle(
+                    icon = Icons.Outlined.Palette,
+                    title = "Dynamic Colors",
+                    subtitle = "Use Material You color theme",
+                    checked = true,
+                )
             }
+        }
 
-            item {
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "About",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    AboutRow(icon = Icons.Outlined.Security, title = "ScanAPK", subtitle = "Version 1.0.0")
-                    AboutRow(icon = Icons.Outlined.Info, title = "Security Scanner", subtitle = "APK Analysis Tool")
-                }
+        item {
+            ScanCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "About",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                AboutRow(icon = Icons.Outlined.Security, title = "ScanAPK", subtitle = "Version 1.0.0")
+                AboutRow(icon = Icons.Outlined.Info, title = "Security Scanner", subtitle = "APK Analysis Tool")
             }
+        }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

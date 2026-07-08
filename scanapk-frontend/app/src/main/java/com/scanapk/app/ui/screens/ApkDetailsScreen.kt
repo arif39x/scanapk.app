@@ -13,18 +13,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Dangerous
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,111 +30,85 @@ import com.scanapk.app.model.Permission
 import com.scanapk.app.ui.components.DataTable
 import com.scanapk.app.ui.components.ScanCard
 import com.scanapk.app.ui.components.TableRow
-import com.scanapk.app.ui.theme.OnSurface
 import com.scanapk.app.ui.theme.OnSurfaceVariant
 import com.scanapk.app.ui.theme.SeverityHigh
 import com.scanapk.app.ui.theme.SeveritySafe
-import com.scanapk.app.ui.theme.Surface
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApkDetailsScreen(
     apkInfo: ApkInfo = sampleApkInfo,
-    onBack: () -> Unit = {},
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("APK Details", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                ),
-            )
-        },
-        containerColor = Surface,
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = apkInfo.appName,
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = apkInfo.packageName,
-                        color = OnSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-
-            item {
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Metadata",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    DataTable(
-                        rows = listOf(
-                            TableRow("Version", "${apkInfo.versionName} (${apkInfo.versionCode})"),
-                            TableRow("Min SDK", "API ${apkInfo.minSdk}"),
-                            TableRow("Target SDK", "API ${apkInfo.targetSdk}"),
-                            TableRow("File Size", formatFileSize(apkInfo.fileSize)),
-                        ),
-                    )
-                }
-            }
-
-            item {
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Hashes",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    DataTable(
-                        rows = listOf(
-                            TableRow("SHA-256", apkInfo.sha256),
-                            TableRow("MD5", apkInfo.md5),
-                        ),
-                    )
-                }
-            }
-
-            item {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            ScanCard(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Permissions",
+                    text = apkInfo.appName,
                     style = MaterialTheme.typography.headlineSmall,
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = apkInfo.packageName,
+                    color = OnSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
+        }
 
-            items(apkInfo.permissions) { permission ->
-                PermissionItem(permission = permission)
+        item {
+            ScanCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Metadata",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                DataTable(
+                    rows = listOf(
+                        TableRow("Version", "${apkInfo.versionName} (${apkInfo.versionCode})"),
+                        TableRow("Min SDK", "API ${apkInfo.minSdk}"),
+                        TableRow("Target SDK", "API ${apkInfo.targetSdk}"),
+                        TableRow("File Size", formatFileSize(apkInfo.fileSize)),
+                    ),
+                )
             }
+        }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
+        item {
+            ScanCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Hashes",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                DataTable(
+                    rows = listOf(
+                        TableRow("SHA-256", apkInfo.sha256),
+                        TableRow("MD5", apkInfo.md5),
+                    ),
+                )
             }
+        }
+
+        item {
+            Text(
+                text = "Permissions",
+                style = MaterialTheme.typography.headlineSmall,
+            )
+        }
+
+        items(apkInfo.permissions) { permission ->
+            PermissionItem(permission = permission)
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

@@ -14,20 +14,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,136 +36,94 @@ import com.scanapk.app.model.Severity
 import com.scanapk.app.ui.components.ScanCard
 import com.scanapk.app.ui.components.ScanProgressBar
 import com.scanapk.app.ui.components.SeverityChip
-import com.scanapk.app.ui.theme.OnSurface
 import com.scanapk.app.ui.theme.OnSurfaceVariant
 import com.scanapk.app.ui.theme.Primary
-import com.scanapk.app.ui.theme.Surface
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToResult: (String) -> Unit = {},
-    onNavigateToApkDetails: () -> Unit = {},
 ) {
     var isScanning by remember { mutableStateOf(false) }
     var scanProgress by remember { mutableStateOf(0f) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Security,
-                            contentDescription = null,
-                            tint = Primary,
-                            modifier = Modifier.size(28.dp),
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "ScanAPK",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp,
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToApkDetails) {
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = "APK Details",
-                            tint = OnSurfaceVariant,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                ),
-            )
-        },
-        containerColor = Surface,
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                ScanCard {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            ScanCard {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "APK Security Scanner",
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Analyze APK files for vulnerabilities, malware, and security risks",
+                        color = OnSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = {
+                            isScanning = true
+                            scanProgress = 0f
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Primary,
+                        ),
                     ) {
-                        Text(
-                            text = "APK Security Scanner",
-                            style = MaterialTheme.typography.headlineSmall,
+                        Icon(
+                            imageVector = Icons.Outlined.Analytics,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isScanning) "Scanning..." else "Start New Scan",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+
+                    if (isScanning) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ScanProgressBar(progress = scanProgress)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Analyze APK files for vulnerabilities, malware, and security risks",
+                            text = "${(scanProgress * 100).toInt()}%",
                             color = OnSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 13.sp,
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = {
-                                isScanning = true
-                                scanProgress = 0f
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Primary,
-                            ),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Analytics,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isScanning) "Scanning..." else "Start New Scan",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
-
-                        if (isScanning) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            ScanProgressBar(progress = scanProgress)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "${(scanProgress * 100).toInt()}%",
-                                color = OnSurfaceVariant,
-                                fontSize = 13.sp,
-                            )
-                        }
                     }
                 }
             }
+        }
 
-            item {
-                Text(
-                    text = "Recent Scans",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
+        item {
+            Text(
+                text = "Recent Scans",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
 
-            items(sampleRecentScans) { scan ->
-                RecentScanItem(scan = scan, onClick = { onNavigateToResult(scan.id) })
-            }
+        items(sampleRecentScans) { scan ->
+            RecentScanItem(scan = scan, onClick = { onNavigateToResult(scan.id) })
+        }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
