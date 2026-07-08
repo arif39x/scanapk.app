@@ -31,8 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scanapk.app.ui.components.ScanCard
-import com.scanapk.app.ui.theme.OnSurfaceVariant
-import com.scanapk.app.ui.theme.Primary
 
 @Composable
 fun SettingsScreen(
@@ -132,7 +130,7 @@ private fun SettingToggle(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = OnSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp),
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -144,7 +142,7 @@ private fun SettingToggle(
             )
             Text(
                 text = subtitle,
-                color = OnSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
             )
         }
@@ -152,7 +150,7 @@ private fun SettingToggle(
             checked = checked,
             onCheckedChange = { onCheckedChange() },
             colors = SwitchDefaults.colors(
-                checkedTrackColor = Primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
             ),
         )
     }
@@ -173,7 +171,7 @@ private fun AboutRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Primary,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(22.dp),
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -185,7 +183,7 @@ private fun AboutRow(
             )
             Text(
                 text = subtitle,
-                color = OnSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
             )
         }

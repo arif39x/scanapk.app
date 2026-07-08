@@ -30,7 +30,6 @@ import com.scanapk.app.model.Permission
 import com.scanapk.app.ui.components.DataTable
 import com.scanapk.app.ui.components.ScanCard
 import com.scanapk.app.ui.components.TableRow
-import com.scanapk.app.ui.theme.OnSurfaceVariant
 import com.scanapk.app.ui.theme.SeverityHigh
 import com.scanapk.app.ui.theme.SeveritySafe
 
@@ -54,7 +53,7 @@ fun ApkDetailsScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = apkInfo.packageName,
-                    color = OnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -135,7 +134,7 @@ private fun PermissionItem(permission: Permission) {
                 )
                 Text(
                     text = permission.description,
-                    color = OnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                 )
             }

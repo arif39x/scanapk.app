@@ -1,9 +1,13 @@
 package com.scanapk.app
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,12 +36,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,24 +54,40 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.scanapk.app.ui.navigation.AppNavigation
 import com.scanapk.app.ui.navigation.Routes
-import com.scanapk.app.ui.theme.OnSurface
-import com.scanapk.app.ui.theme.OnSurfaceVariant
-import com.scanapk.app.ui.theme.Primary
 import com.scanapk.app.ui.theme.ScanAPKTheme
-import com.scanapk.app.ui.theme.Surface
 
 class MainActivity : ComponentActivity() {
+    private val _intent = mutableStateOf<Intent?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        _intent.value = intent
         setContent {
             val isDarkMode = remember { mutableStateOf(false) }
+            val sharedUri = remember(_intent.value) {
+                _intent.value?.let { extractShareUri(it) }
+            }
             ScanAPKTheme(isDarkMode = isDarkMode.value) {
                 ScanAPKApp(
                     isDarkMode = isDarkMode.value,
                     onToggleDarkMode = { isDarkMode.value = !isDarkMode.value },
+                    initialShareUri = sharedUri,
                 )
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        _intent.value = intent
+    }
+
+    private fun extractShareUri(intent: Intent): Uri? {
+        return when (intent.action) {
+            Intent.ACTION_SEND -> intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            Intent.ACTION_VIEW -> intent.data
+            else -> null
         }
     }
 }
@@ -88,6 +110,7 @@ private val rootRoutes = listOf(Routes.HOME, Routes.SETTINGS)
 fun ScanAPKApp(
     isDarkMode: Boolean = false,
     onToggleDarkMode: () -> Unit = {},
+    initialShareUri: Uri? = null,
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -97,6 +120,38 @@ fun ScanAPKApp(
     val showBottomBar = currentRoute in rootRoutes
     var showAboutDialog by remember { mutableStateOf(false) }
 
+    var pendingScanUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+
+    val pickApkLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { }
+            pendingScanUri = it
+            navController.navigate(Routes.SCAN) {
+                popUpTo(Routes.HOME)
+                launchSingleTop = true
+            }
+        }
+    }
+
+    var initialShareHandled by remember { mutableStateOf(false) }
+    LaunchedEffect(initialShareUri) {
+        if (initialShareUri != null && !initialShareHandled) {
+            pendingScanUri = initialShareUri
+            initialShareHandled = true
+            navController.navigate(Routes.SCAN) {
+                popUpTo(Routes.HOME)
+                launchSingleTop = true
+            }
+        }
+    }
+
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
@@ -105,7 +160,7 @@ fun ScanAPKApp(
                     Icon(
                         imageVector = Icons.Default.Security,
                         contentDescription = null,
-                        tint = Primary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -121,12 +176,12 @@ fun ScanAPKApp(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Version 1.0.0",
-                        color = OnSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Analyze APK files for vulnerabilities, malware, and security risks. ScanAPK provides comprehensive analysis of Android applications to help identify potential security issues.",
-                        color = OnSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             },
@@ -140,7 +195,7 @@ fun ScanAPKApp(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Surface,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             when (currentRoute) {
                 Routes.HOME -> {
@@ -150,7 +205,7 @@ fun ScanAPKApp(
                                 Icon(
                                     imageVector = Icons.Default.Security,
                                     contentDescription = null,
-                                    tint = Primary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(28.dp),
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -166,17 +221,17 @@ fun ScanAPKApp(
                                 Icon(
                                     imageVector = Icons.Outlined.Info,
                                     contentDescription = "About",
-                                    tint = OnSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Surface,
-                            titleContentColor = OnSurface,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface,
                         ),
                     )
                 }
-                Routes.SCAN_RESULT -> {
+                Routes.SCAN, Routes.SCAN_RESULT -> {
                     TopAppBar(
                         title = { Text("Scan Results", fontWeight = FontWeight.Bold) },
                         navigationIcon = {
@@ -188,8 +243,8 @@ fun ScanAPKApp(
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Surface,
-                            titleContentColor = OnSurface,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface,
                         ),
                     )
                 }
@@ -205,8 +260,8 @@ fun ScanAPKApp(
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Surface,
-                            titleContentColor = OnSurface,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface,
                         ),
                     )
                 }
@@ -222,8 +277,8 @@ fun ScanAPKApp(
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Surface,
-                            titleContentColor = OnSurface,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface,
                         ),
                     )
                 }
@@ -232,7 +287,7 @@ fun ScanAPKApp(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = Surface,
+                    containerColor = MaterialTheme.colorScheme.surface,
                 ) {
                     bottomNavItems.forEach { item ->
                         val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -257,11 +312,11 @@ fun ScanAPKApp(
                                 Text(text = item.label, fontSize = 11.sp)
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Primary,
-                                selectedTextColor = Primary,
-                                unselectedIconColor = OnSurfaceVariant,
-                                unselectedTextColor = OnSurfaceVariant,
-                                indicatorColor = Surface,
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                indicatorColor = MaterialTheme.colorScheme.surface,
                             ),
                         )
                     }
@@ -273,6 +328,14 @@ fun ScanAPKApp(
             navController = navController,
             isDarkMode = isDarkMode,
             onToggleDarkMode = onToggleDarkMode,
+            pendingScanUri = pendingScanUri,
+            onScanRequested = {
+                pickApkLauncher.launch(arrayOf(
+                    "application/vnd.android.package-archive",
+                    "application/octet-stream",
+                    "*/*"
+                ))
+            },
             modifier = Modifier.padding(padding),
         )
     }

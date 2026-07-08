@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.scanapk.app.ui.theme.PrimaryContainer
 
 @Composable
 fun ScanProgressBar(
@@ -32,14 +32,14 @@ fun ScanProgressBar(
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(height / 2))
-            .background(androidx.compose.ui.graphics.Color(0xFFE1E3E4)),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(animatedProgress)
                 .height(height)
                 .clip(RoundedCornerShape(height / 2))
-                .background(PrimaryContainer),
+                .background(MaterialTheme.colorScheme.primaryContainer),
         )
     }
 }

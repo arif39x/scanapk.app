@@ -22,10 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,18 +30,13 @@ import androidx.compose.ui.unit.sp
 import com.scanapk.app.model.ScanResult
 import com.scanapk.app.model.Severity
 import com.scanapk.app.ui.components.ScanCard
-import com.scanapk.app.ui.components.ScanProgressBar
 import com.scanapk.app.ui.components.SeverityChip
-import com.scanapk.app.ui.theme.OnSurfaceVariant
-import com.scanapk.app.ui.theme.Primary
 
 @Composable
 fun HomeScreen(
     onNavigateToResult: (String) -> Unit = {},
+    onScanRequested: () -> Unit = {},
 ) {
-    var isScanning by remember { mutableStateOf(false) }
-    var scanProgress by remember { mutableStateOf(0f) }
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -66,21 +57,18 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Analyze APK files for vulnerabilities, malware, and security risks",
-                        color = OnSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = {
-                            isScanning = true
-                            scanProgress = 0f
-                        },
+                        onClick = onScanRequested,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Primary,
+                            containerColor = MaterialTheme.colorScheme.primary,
                         ),
                     ) {
                         Icon(
@@ -90,20 +78,9 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (isScanning) "Scanning..." else "Upload APK",
+                            text = "Upload APK",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                        )
-                    }
-
-                    if (isScanning) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        ScanProgressBar(progress = scanProgress)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${(scanProgress * 100).toInt()}%",
-                            color = OnSurfaceVariant,
-                            fontSize = 13.sp,
                         )
                     }
                 }
@@ -141,7 +118,7 @@ private fun RecentScanItem(
             Icon(
                 imageVector = Icons.Outlined.History,
                 contentDescription = null,
-                tint = OnSurfaceVariant,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -153,7 +130,7 @@ private fun RecentScanItem(
                 )
                 Text(
                     text = scan.packageName,
-                    color = OnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
                 )
             }

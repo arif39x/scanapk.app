@@ -1,6 +1,10 @@
 package com.scanapk.app.ui.screens
 
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,12 +16,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,59 +37,289 @@ import com.scanapk.app.model.Severity
 import com.scanapk.app.model.Vulnerability
 import com.scanapk.app.ui.components.ScanCard
 import com.scanapk.app.ui.components.SeverityChip
-import com.scanapk.app.ui.theme.OnSurfaceVariant
-import com.scanapk.app.ui.theme.Primary
 import com.scanapk.app.ui.theme.SeverityCritical
 import com.scanapk.app.ui.theme.SeverityHigh
 import com.scanapk.app.ui.theme.SeverityLow
 import com.scanapk.app.ui.theme.SeverityMedium
 import com.scanapk.app.ui.theme.SeveritySafe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.UUID
 
 @Composable
 fun ScanResultScreen(
     scanResult: ScanResult = sampleResult,
+    apkUri: Uri? = null,
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            ScoreCard(scanResult = scanResult)
-        }
+    var scannedResult by remember { mutableStateOf<ScanResult?>(null) }
+    var isScanning by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
-        item {
-            SeverityBreakdown(severityCounts = scanResult.severityCounts)
+    LaunchedEffect(apkUri) {
+        if (apkUri != null) {
+            isScanning = true
+            errorMessage = null
+            scannedResult = null
+            val result = withContext(Dispatchers.IO) {
+                scanApk(context, apkUri)
+            }
+            if (result != null) {
+                scannedResult = result
+            } else {
+                errorMessage = "Failed to scan APK. The file may be invalid or inaccessible."
+            }
+            isScanning = false
         }
+    }
 
-        item {
+    val displayResult = scannedResult ?: scanResult
+
+    if (isScanning) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Scanning APK...",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+        }
+    } else if (errorMessage != null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
             Text(
-                text = "Vulnerabilities",
-                style = MaterialTheme.typography.headlineSmall,
+                text = errorMessage ?: "",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
-
-        items(scanResult.vulnerabilities) { vuln ->
-            VulnerabilityCard(vulnerability = vuln)
-        }
-
-        if (scanResult.vulnerabilities.isEmpty()) {
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             item {
-                ScanCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "No vulnerabilities found",
-                        color = OnSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                Spacer(modifier = Modifier.height(8.dp))
+                ScoreCard(scanResult = displayResult)
+            }
+
+            item {
+                SeverityBreakdown(severityCounts = displayResult.severityCounts)
+            }
+
+            item {
+                Text(
+                    text = "Vulnerabilities",
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            }
+
+            items(displayResult.vulnerabilities) { vuln ->
+                VulnerabilityCard(vulnerability = vuln)
+            }
+
+            if (displayResult.vulnerabilities.isEmpty()) {
+                item {
+                    ScanCard(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "No vulnerabilities found",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+@Suppress("DEPRECATION")
+private suspend fun scanApk(context: Context, uri: Uri): ScanResult? {
+    return try {
+        val tempFile = File(context.cacheDir, "scan_${System.currentTimeMillis()}.apk")
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                tempFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            } ?: return null
+
+            val pm = context.packageManager
+            val pi = pm.getPackageArchiveInfo(
+                tempFile.absolutePath,
+                PackageManager.GET_ACTIVITIES or PackageManager.GET_PERMISSIONS
+            ) ?: return null
+
+            val pkgName = pi.packageName
+            val versionName = pi.versionName ?: "1.0"
+            val versionCode = pi.versionCode
+            val apkName = "${pkgName}-v${versionName}.apk"
+
+            val manifestPerms = pi.requestedPermissions ?: emptyArray()
+            val vulnerabilities = mutableListOf<Vulnerability>()
+
+            manifestPerms.forEach { perm ->
+                when {
+                    perm.contains("READ_CONTACTS") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Reads Contacts",
+                            description = "Application requests permission to read user contacts, which may pose a privacy risk.",
+                            severity = Severity.MEDIUM,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("CAMERA") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Camera Access",
+                            description = "Application requests camera access, which could be used for unauthorized recording.",
+                            severity = Severity.MEDIUM,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("RECORD_AUDIO") && !perm.contains("BIND") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Audio Recording",
+                            description = "Application can record audio without user interaction.",
+                            severity = Severity.HIGH,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("ACCESS_FINE_LOCATION") || perm.contains("ACCESS_COARSE_LOCATION") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Location Tracking",
+                            description = "Application can access device location, potentially tracking user movement.",
+                            severity = Severity.HIGH,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("SMS") && !perm.contains("BIND") && !perm.contains("SEND") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "SMS Access",
+                            description = "Application can read or intercept SMS messages, potentially capturing sensitive information.",
+                            severity = Severity.CRITICAL,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("READ_PHONE_STATE") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Phone State Access",
+                            description = "Application can access device identifiers like IMEI, which can be used for device tracking.",
+                            severity = Severity.MEDIUM,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("READ_CALENDAR") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Calendar Access",
+                            description = "Application can read calendar events, potentially accessing personal schedule information.",
+                            severity = Severity.MEDIUM,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("BODY_SENSORS") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Body Sensor Access",
+                            description = "Application can access sensor data like heart rate, potentially exposing health information.",
+                            severity = Severity.MEDIUM,
+                            category = "Privacy",
+                        )
+                    )
+                    perm.contains("ACTIVITY_RECOGNITION") -> vulnerabilities.add(
+                        Vulnerability(
+                            id = UUID.randomUUID().toString(),
+                            title = "Activity Recognition",
+                            description = "Application can recognize user activity patterns, potentially inferring behavior.",
+                            severity = Severity.LOW,
+                            category = "Privacy",
+                        )
                     )
                 }
             }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
+            val appFlags = pi.applicationInfo?.flags ?: 0
+            val isDebuggable = appFlags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+            if (isDebuggable) {
+                vulnerabilities.add(
+                    Vulnerability(
+                        id = UUID.randomUUID().toString(),
+                        title = "Debuggable Application",
+                        description = "The APK is built in debug mode, which should not be used for production releases.",
+                        severity = Severity.HIGH,
+                        category = "Code Quality",
+                    )
+                )
+            }
+
+            val severityCounts = mutableMapOf(
+                Severity.SAFE to 0,
+                Severity.LOW to 0,
+                Severity.MEDIUM to 0,
+                Severity.HIGH to 0,
+                Severity.CRITICAL to 0,
+            )
+            vulnerabilities.forEach { vuln ->
+                severityCounts[vuln.severity] = (severityCounts[vuln.severity] ?: 0) + 1
+            }
+            val totalAnalyzed = 10
+            severityCounts[Severity.SAFE] = totalAnalyzed - vulnerabilities.size
+
+            val deductions = vulnerabilities.sumOf { vuln ->
+                val points: Int = when (vuln.severity) {
+                    Severity.LOW -> 5
+                    Severity.MEDIUM -> 10
+                    Severity.HIGH -> 20
+                    Severity.CRITICAL -> 35
+                    else -> 0
+                }
+                points
+            }
+            val overallScore = maxOf(0, 100 - deductions)
+
+            ScanResult(
+                id = UUID.randomUUID().toString(),
+                apkName = apkName,
+                packageName = pkgName,
+                versionName = versionName,
+                versionCode = versionCode,
+                overallScore = overallScore,
+                severityCounts = severityCounts.toMap(),
+                vulnerabilities = vulnerabilities,
+                scanTimestamp = System.currentTimeMillis(),
+            )
+        } finally {
+            if (tempFile.exists()) {
+                tempFile.delete()
+            }
         }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
     }
 }
 
@@ -101,13 +342,13 @@ private fun ScoreCard(scanResult: ScanResult) {
             )
             Text(
                 text = "Security Score",
-                color = OnSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelLarge,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = scanResult.apkName,
-                color = OnSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -135,7 +376,7 @@ private fun SeverityBreakdown(severityCounts: Map<Severity, Int>) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "$count findings",
-                    color = OnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp,
                 )
             }
@@ -161,12 +402,12 @@ private fun VulnerabilityCard(vulnerability: Vulnerability) {
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = vulnerability.description,
-            color = OnSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
         )
         Text(
             text = "Category: ${vulnerability.category}",
-            color = Primary,
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 4.dp),
         )

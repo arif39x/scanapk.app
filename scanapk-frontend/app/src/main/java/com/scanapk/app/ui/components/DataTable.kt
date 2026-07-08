@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.scanapk.app.ui.theme.OnSurfaceVariant
+import androidx.compose.material3.MaterialTheme
 
 data class TableRow(
     val label: String,
@@ -36,7 +36,7 @@ fun DataTable(
             ) {
                 Text(
                     text = row.label,
-                    color = OnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(0.4f),
@@ -48,7 +48,7 @@ fun DataTable(
                 )
             }
             if (index < rows.size - 1) {
-                HorizontalDivider(thickness = 1.dp, color = androidx.compose.ui.graphics.Color(0xFFF1F3F4))
+                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     }
