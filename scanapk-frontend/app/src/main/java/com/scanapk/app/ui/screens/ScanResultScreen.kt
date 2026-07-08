@@ -1,7 +1,5 @@
 package com.scanapk.app.ui.screens
 
-import android.content.Context
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,55 +20,43 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.scanapk.app.model.ScanResult
 import com.scanapk.app.model.Severity
 import com.scanapk.app.model.Vulnerability
 import com.scanapk.app.ui.components.ScanCard
+import com.scanapk.app.ui.components.ScanProgressBar
 import com.scanapk.app.ui.components.SeverityChip
 import com.scanapk.app.ui.theme.SeverityCritical
 import com.scanapk.app.ui.theme.SeverityHigh
 import com.scanapk.app.ui.theme.SeverityLow
 import com.scanapk.app.ui.theme.SeverityMedium
 import com.scanapk.app.ui.theme.SeveritySafe
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.UUID
+import com.scanapk.app.viewmodel.ScanViewModel
 
 @Composable
 fun ScanResultScreen(
     scanResult: ScanResult = sampleResult,
     apkUri: Uri? = null,
 ) {
-    var scannedResult by remember { mutableStateOf<ScanResult?>(null) }
-    var isScanning by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val viewModel: ScanViewModel = viewModel()
     val context = LocalContext.current
+    val isScanning by viewModel.isScanning.collectAsState()
+    val scannedResult by viewModel.scannedResult.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val copyProgress by viewModel.copyProgress.collectAsState()
 
     LaunchedEffect(apkUri) {
         if (apkUri != null) {
-            isScanning = true
-            errorMessage = null
-            scannedResult = null
-            val result = withContext(Dispatchers.IO) {
-                scanApk(context, apkUri)
-            }
-            if (result != null) {
-                scannedResult = result
-            } else {
-                errorMessage = "Failed to scan APK. The file may be invalid or inaccessible."
-            }
-            isScanning = false
+            viewModel.scan(context, apkUri)
         }
     }
 
@@ -82,13 +68,28 @@ fun ScanResultScreen(
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (copyProgress >= 0f) {
+                    ScanProgressBar(
+                        progress = copyProgress,
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .padding(bottom = 16.dp),
+                        height = 6.dp,
+                    )
+                    Text(
+                        text = "Copying APK... ${(copyProgress * 100).toInt()}%",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 CircularProgressIndicator(
                     modifier = Modifier.size(48.dp),
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Scanning APK...",
+                    text = if (copyProgress >= 0f) "Analyzing APK..." else "Scanning APK...",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -148,178 +149,6 @@ fun ScanResultScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-    }
-}
-
-@Suppress("DEPRECATION")
-private suspend fun scanApk(context: Context, uri: Uri): ScanResult? {
-    return try {
-        val tempFile = File(context.cacheDir, "scan_${System.currentTimeMillis()}.apk")
-        try {
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                tempFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            } ?: return null
-
-            val pm = context.packageManager
-            val pi = pm.getPackageArchiveInfo(
-                tempFile.absolutePath,
-                PackageManager.GET_ACTIVITIES or PackageManager.GET_PERMISSIONS
-            ) ?: return null
-
-            val pkgName = pi.packageName
-            val versionName = pi.versionName ?: "1.0"
-            val versionCode = pi.versionCode
-            val apkName = "${pkgName}-v${versionName}.apk"
-
-            val manifestPerms = pi.requestedPermissions ?: emptyArray()
-            val vulnerabilities = mutableListOf<Vulnerability>()
-
-            manifestPerms.forEach { perm ->
-                when {
-                    perm.contains("READ_CONTACTS") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Reads Contacts",
-                            description = "Application requests permission to read user contacts, which may pose a privacy risk.",
-                            severity = Severity.MEDIUM,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("CAMERA") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Camera Access",
-                            description = "Application requests camera access, which could be used for unauthorized recording.",
-                            severity = Severity.MEDIUM,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("RECORD_AUDIO") && !perm.contains("BIND") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Audio Recording",
-                            description = "Application can record audio without user interaction.",
-                            severity = Severity.HIGH,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("ACCESS_FINE_LOCATION") || perm.contains("ACCESS_COARSE_LOCATION") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Location Tracking",
-                            description = "Application can access device location, potentially tracking user movement.",
-                            severity = Severity.HIGH,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("SMS") && !perm.contains("BIND") && !perm.contains("SEND") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "SMS Access",
-                            description = "Application can read or intercept SMS messages, potentially capturing sensitive information.",
-                            severity = Severity.CRITICAL,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("READ_PHONE_STATE") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Phone State Access",
-                            description = "Application can access device identifiers like IMEI, which can be used for device tracking.",
-                            severity = Severity.MEDIUM,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("READ_CALENDAR") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Calendar Access",
-                            description = "Application can read calendar events, potentially accessing personal schedule information.",
-                            severity = Severity.MEDIUM,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("BODY_SENSORS") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Body Sensor Access",
-                            description = "Application can access sensor data like heart rate, potentially exposing health information.",
-                            severity = Severity.MEDIUM,
-                            category = "Privacy",
-                        )
-                    )
-                    perm.contains("ACTIVITY_RECOGNITION") -> vulnerabilities.add(
-                        Vulnerability(
-                            id = UUID.randomUUID().toString(),
-                            title = "Activity Recognition",
-                            description = "Application can recognize user activity patterns, potentially inferring behavior.",
-                            severity = Severity.LOW,
-                            category = "Privacy",
-                        )
-                    )
-                }
-            }
-
-            val appFlags = pi.applicationInfo?.flags ?: 0
-            val isDebuggable = appFlags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
-            if (isDebuggable) {
-                vulnerabilities.add(
-                    Vulnerability(
-                        id = UUID.randomUUID().toString(),
-                        title = "Debuggable Application",
-                        description = "The APK is built in debug mode, which should not be used for production releases.",
-                        severity = Severity.HIGH,
-                        category = "Code Quality",
-                    )
-                )
-            }
-
-            val severityCounts = mutableMapOf(
-                Severity.SAFE to 0,
-                Severity.LOW to 0,
-                Severity.MEDIUM to 0,
-                Severity.HIGH to 0,
-                Severity.CRITICAL to 0,
-            )
-            vulnerabilities.forEach { vuln ->
-                severityCounts[vuln.severity] = (severityCounts[vuln.severity] ?: 0) + 1
-            }
-            val totalAnalyzed = 10
-            severityCounts[Severity.SAFE] = totalAnalyzed - vulnerabilities.size
-
-            val deductions = vulnerabilities.sumOf { vuln ->
-                val points: Int = when (vuln.severity) {
-                    Severity.LOW -> 5
-                    Severity.MEDIUM -> 10
-                    Severity.HIGH -> 20
-                    Severity.CRITICAL -> 35
-                    else -> 0
-                }
-                points
-            }
-            val overallScore = maxOf(0, 100 - deductions)
-
-            ScanResult(
-                id = UUID.randomUUID().toString(),
-                apkName = apkName,
-                packageName = pkgName,
-                versionName = versionName,
-                versionCode = versionCode,
-                overallScore = overallScore,
-                severityCounts = severityCounts.toMap(),
-                vulnerabilities = vulnerabilities,
-                scanTimestamp = System.currentTimeMillis(),
-            )
-        } finally {
-            if (tempFile.exists()) {
-                tempFile.delete()
-            }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
     }
 }
 

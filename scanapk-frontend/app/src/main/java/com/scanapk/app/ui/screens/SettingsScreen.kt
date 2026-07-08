@@ -24,6 +24,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,7 +40,12 @@ import com.scanapk.app.ui.components.ScanCard
 fun SettingsScreen(
     isDarkMode: Boolean = false,
     onToggleDarkMode: () -> Unit = {},
+    useSystemColors: Boolean = false,
+    onToggleSystemColors: () -> Unit = {},
 ) {
+    var notificationsEnabled by remember { mutableStateOf(true) }
+    var autoSaveReports by remember { mutableStateOf(true) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -59,13 +68,15 @@ fun SettingsScreen(
                     icon = Icons.Outlined.Notifications,
                     title = "Notifications",
                     subtitle = "Get notified when scan completes",
-                    checked = true,
+                    checked = notificationsEnabled,
+                    onCheckedChange = { notificationsEnabled = it },
                 )
                 SettingToggle(
                     icon = Icons.Outlined.Storage,
                     title = "Auto-save Reports",
                     subtitle = "Save scan reports locally",
-                    checked = true,
+                    checked = autoSaveReports,
+                    onCheckedChange = { autoSaveReports = it },
                 )
             }
         }
@@ -87,9 +98,10 @@ fun SettingsScreen(
                 )
                 SettingToggle(
                     icon = Icons.Outlined.Palette,
-                    title = "Dynamic Colors",
-                    subtitle = "Use Material You color theme",
-                    checked = true,
+                    title = "Default system Colour",
+                    subtitle = "Adopt system colour scheme",
+                    checked = useSystemColors,
+                    onCheckedChange = { onToggleSystemColors() },
                 )
             }
         }
@@ -104,6 +116,22 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 AboutRow(icon = Icons.Outlined.Security, title = "ScanAPK", subtitle = "Version 1.0.0")
                 AboutRow(icon = Icons.Outlined.Info, title = "Security Scanner", subtitle = "APK Analysis Tool")
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "ScanAPK is a powerful APK analysis tool that scans Android applications for vulnerabilities, malware, and security risks. Upload any APK file to get a comprehensive security report.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                    )
+                }
             }
         }
 
@@ -119,7 +147,7 @@ private fun SettingToggle(
     title: String,
     subtitle: String,
     checked: Boolean,
-    onCheckedChange: () -> Unit = {},
+    onCheckedChange: (Boolean) -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -148,7 +176,7 @@ private fun SettingToggle(
         }
         Switch(
             checked = checked,
-            onCheckedChange = { onCheckedChange() },
+            onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedTrackColor = MaterialTheme.colorScheme.primary,
             ),
@@ -171,7 +199,7 @@ private fun AboutRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp),
         )
         Spacer(modifier = Modifier.width(12.dp))

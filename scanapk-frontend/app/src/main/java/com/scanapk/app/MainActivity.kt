@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
@@ -40,7 +41,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,14 +69,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         _intent.value = intent
         setContent {
-            val isDarkMode = remember { mutableStateOf(false) }
+            val isDarkMode = rememberSaveable { mutableStateOf(false) }
+            val useSystemColors = rememberSaveable { mutableStateOf(false) }
             val sharedUri = remember(_intent.value) {
                 _intent.value?.let { extractShareUri(it) }
             }
-            ScanAPKTheme(isDarkMode = isDarkMode.value) {
+            ScanAPKTheme(
+                isDarkMode = isDarkMode.value,
+                useSystemColors = useSystemColors.value,
+            ) {
                 ScanAPKApp(
                     isDarkMode = isDarkMode.value,
                     onToggleDarkMode = { isDarkMode.value = !isDarkMode.value },
+                    useSystemColors = useSystemColors.value,
+                    onToggleSystemColors = { useSystemColors.value = !useSystemColors.value },
                     initialShareUri = sharedUri,
                 )
             }
@@ -100,16 +111,19 @@ data class BottomNavItem(
 
 private val bottomNavItems = listOf(
     BottomNavItem("Home", Icons.Outlined.Home, Routes.HOME),
+    BottomNavItem("History", Icons.Outlined.History, Routes.HISTORY),
     BottomNavItem("Settings", Icons.Outlined.Settings, Routes.SETTINGS),
 )
 
-private val rootRoutes = listOf(Routes.HOME, Routes.SETTINGS)
+private val rootRoutes = listOf(Routes.HOME, Routes.HISTORY, Routes.SETTINGS)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanAPKApp(
     isDarkMode: Boolean = false,
     onToggleDarkMode: () -> Unit = {},
+    useSystemColors: Boolean = false,
+    onToggleSystemColors: () -> Unit = {},
     initialShareUri: Uri? = null,
 ) {
     val navController = rememberNavController()
@@ -119,6 +133,7 @@ fun ScanAPKApp(
 
     val showBottomBar = currentRoute in rootRoutes
     var showAboutDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     var pendingScanUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
@@ -127,11 +142,13 @@ fun ScanAPKApp(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    it, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: SecurityException) { }
+            scope.launch(Dispatchers.IO) {
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        it, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: SecurityException) { }
+            }
             pendingScanUri = it
             navController.navigate(Routes.SCAN) {
                 popUpTo(Routes.HOME)
@@ -156,16 +173,11 @@ fun ScanAPKApp(
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
             title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Security,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("ScanAPK", fontWeight = FontWeight.Bold)
-                }
+                Text(
+                    "ScanAPK",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             },
             text = {
                 Column {
@@ -201,20 +213,12 @@ fun ScanAPKApp(
                 Routes.HOME -> {
                     TopAppBar(
                         title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Security,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(28.dp),
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = "ScanAPK",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 22.sp,
-                                )
-                            }
+                            Text(
+                                text = "ScanAPK",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
                         },
                         actions = {
                             IconButton(onClick = { showAboutDialog = true }) {
@@ -259,6 +263,15 @@ fun ScanAPKApp(
                                 )
                             }
                         },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    )
+                }
+                Routes.HISTORY -> {
+                    TopAppBar(
+                        title = { Text("History", fontWeight = FontWeight.Bold) },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -328,6 +341,8 @@ fun ScanAPKApp(
             navController = navController,
             isDarkMode = isDarkMode,
             onToggleDarkMode = onToggleDarkMode,
+            useSystemColors = useSystemColors,
+            onToggleSystemColors = onToggleSystemColors,
             pendingScanUri = pendingScanUri,
             onScanRequested = {
                 pickApkLauncher.launch(arrayOf(

@@ -1,5 +1,6 @@
 package com.scanapk.app.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -70,10 +71,18 @@ private val ScanAPKDarkColorScheme = darkColorScheme(
 @Composable
 fun ScanAPKTheme(
     isDarkMode: Boolean = false,
+    useSystemColors: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val colorScheme = when {
+        useSystemColors -> {
+            if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()
+        }
+        isDarkMode -> ScanAPKDarkColorScheme
+        else -> ScanAPKLightColorScheme
+    }
     MaterialTheme(
-        colorScheme = if (isDarkMode) ScanAPKDarkColorScheme else ScanAPKLightColorScheme,
+        colorScheme = colorScheme,
         typography = ScanAPKTypography,
         shapes = ScanAPKShapes,
         content = content,

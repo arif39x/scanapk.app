@@ -8,8 +8,7 @@ enum class Severity(val label: String, val score: Int) {
     CRITICAL("Critical", 4);
 
     companion object {
-        fun fromScore(score: Int): Severity {
-            return entries.firstOrNull { it.score == score } ?: SAFE
-        }
+        private val scoreMap = entries.associateBy { it.score }
+        fun fromScore(score: Int): Severity = scoreMap[score] ?: SAFE
     }
 }

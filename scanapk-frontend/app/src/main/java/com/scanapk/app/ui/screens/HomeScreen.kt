@@ -2,7 +2,6 @@ package com.scanapk.app.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,11 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Analytics
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -27,10 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.scanapk.app.model.ScanResult
-import com.scanapk.app.model.Severity
 import com.scanapk.app.ui.components.ScanCard
-import com.scanapk.app.ui.components.SeverityChip
 
 @Composable
 fun HomeScreen(
@@ -88,15 +82,23 @@ fun HomeScreen(
         }
 
         item {
-            Text(
-                text = "Recent Scans",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
-
-        items(sampleRecentScans) { scan ->
-            RecentScanItem(scan = scan, onClick = { onNavigateToResult(scan.id) })
+            ScanCard {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Scan Result",
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Your apk scan result will appear here",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
 
         item {
@@ -105,81 +107,3 @@ fun HomeScreen(
     }
 }
 
-@Composable
-private fun RecentScanItem(
-    scan: ScanResult,
-    onClick: () -> Unit,
-) {
-    ScanCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.History,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = scan.apkName,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 15.sp,
-                )
-                Text(
-                    text = scan.packageName,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                scan.severityCounts.entries
-                    .filter { it.value > 0 && it.key != Severity.SAFE }
-                    .sortedByDescending { it.key.score }
-                    .take(2)
-                    .forEach { (severity, count) ->
-                        SeverityChip(severity = severity)
-                    }
-            }
-        }
-    }
-}
-
-private val sampleRecentScans = listOf(
-    ScanResult(
-        id = "1",
-        apkName = "com.example.app-v2.3.apk",
-        packageName = "com.example.app",
-        versionName = "2.3",
-        versionCode = 23,
-        overallScore = 72,
-        severityCounts = mapOf(
-            Severity.SAFE to 12,
-            Severity.LOW to 3,
-            Severity.MEDIUM to 2,
-            Severity.HIGH to 1,
-            Severity.CRITICAL to 0,
-        ),
-        vulnerabilities = emptyList(),
-        scanTimestamp = System.currentTimeMillis(),
-    ),
-    ScanResult(
-        id = "2",
-        apkName = "com.sample.game-v1.0.apk",
-        packageName = "com.sample.game",
-        versionName = "1.0",
-        versionCode = 1,
-        overallScore = 45,
-        severityCounts = mapOf(
-            Severity.SAFE to 8,
-            Severity.LOW to 5,
-            Severity.MEDIUM to 4,
-            Severity.HIGH to 2,
-            Severity.CRITICAL to 1,
-        ),
-        vulnerabilities = emptyList(),
-        scanTimestamp = System.currentTimeMillis(),
-    ),
-)

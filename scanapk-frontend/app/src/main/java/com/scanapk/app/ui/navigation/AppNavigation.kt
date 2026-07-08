@@ -9,12 +9,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.scanapk.app.ui.screens.ApkDetailsScreen
+import com.scanapk.app.ui.screens.HistoryScreen
 import com.scanapk.app.ui.screens.HomeScreen
 import com.scanapk.app.ui.screens.ScanResultScreen
 import com.scanapk.app.ui.screens.SettingsScreen
 
 object Routes {
     const val HOME = "home"
+    const val HISTORY = "history"
     const val SCAN = "scan"
     const val SCAN_RESULT = "scan_result/{scanId}"
     const val APK_DETAILS = "apk_details"
@@ -28,6 +30,8 @@ fun AppNavigation(
     navController: NavHostController,
     isDarkMode: Boolean = false,
     onToggleDarkMode: () -> Unit = {},
+    useSystemColors: Boolean = false,
+    onToggleSystemColors: () -> Unit = {},
     pendingScanUri: Uri? = null,
     onScanRequested: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -43,6 +47,14 @@ fun AppNavigation(
                     navController.navigate(Routes.scanResult(scanId))
                 },
                 onScanRequested = onScanRequested,
+            )
+        }
+
+        composable(Routes.HISTORY) {
+            HistoryScreen(
+                onNavigateToResult = { scanId ->
+                    navController.navigate(Routes.scanResult(scanId))
+                },
             )
         }
 
@@ -67,6 +79,8 @@ fun AppNavigation(
             SettingsScreen(
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = onToggleDarkMode,
+                useSystemColors = useSystemColors,
+                onToggleSystemColors = onToggleSystemColors,
             )
         }
     }
