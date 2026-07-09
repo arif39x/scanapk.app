@@ -14,6 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,6 +65,7 @@ fun ScanResultScreen(
     val scannedResult by viewModel.scannedResult.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val copyProgress by viewModel.copyProgress.collectAsState()
+    val currentStatus by viewModel.currentStatus.collectAsState()
 
     LaunchedEffect(apkUri) {
         if (apkUri != null) {
@@ -77,7 +90,7 @@ fun ScanResultScreen(
                         height = 6.dp,
                     )
                     Text(
-                        text = "Copying APK... ${(copyProgress * 100).toInt()}%",
+                        text = "Uploading... ${(copyProgress * 100).toInt()}%",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -89,7 +102,7 @@ fun ScanResultScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = if (copyProgress >= 0f) "Analyzing APK..." else "Scanning APK...",
+                    text = currentStatus.ifEmpty { "Scanning..." },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -119,7 +132,17 @@ fun ScanResultScreen(
             }
 
             item {
-                SeverityBreakdown(severityCounts = displayResult.severityCounts)
+                VerdictCard(scanResult = displayResult)
+            }
+
+            if (displayResult.keyFindings.isNotEmpty()) {
+                item {
+                    FindingsCard(findings = displayResult.keyFindings)
+                }
+            }
+
+            item {
+                FindingCountsGrid(scanResult = displayResult)
             }
 
             item {
@@ -142,6 +165,12 @@ fun ScanResultScreen(
                             modifier = Modifier.padding(vertical = 8.dp),
                         )
                     }
+                }
+            }
+
+            if (displayResult.recommendations.isNotEmpty()) {
+                item {
+                    RecommendationsCard(recommendations = displayResult.recommendations)
                 }
             }
 
@@ -170,7 +199,7 @@ private fun ScoreCard(scanResult: ScanResult) {
                 },
             )
             Text(
-                text = "Security Score",
+                text = "Security Score / 100",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelLarge,
             )
@@ -185,31 +214,107 @@ private fun ScoreCard(scanResult: ScanResult) {
 }
 
 @Composable
-private fun SeverityBreakdown(severityCounts: Map<Severity, Int>) {
+private fun VerdictCard(scanResult: ScanResult) {
+    ScanCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.Shield,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Verdict: ${scanResult.verdict}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                )
+                Text(
+                    text = "Severity: ${scanResult.severity}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp,
+                )
+                scanResult.malwareFamily?.let {
+                    Text(
+                        text = "Family: $it",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FindingsCard(findings: List<String>) {
     ScanCard(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Severity Breakdown",
+            text = "Key Findings",
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        findings.forEach { finding ->
+            Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                Text("•  ", color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = finding,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FindingCountsGrid(scanResult: ScanResult) {
+    ScanCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Analysis Summary",
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Severity.entries.reversed().forEach { severity ->
-            val count = severityCounts[severity] ?: 0
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SeverityChip(severity = severity)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "$count findings",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp,
-                )
-            }
-        }
+        FindingRow(Icons.Filled.Warning, "Dangerous Permissions", scanResult.dangerousPermissionCount, SeverityHigh)
+        FindingRow(Icons.Filled.Code, "Suspicious APIs", scanResult.suspiciousApiCount, SeverityHigh)
+        FindingRow(Icons.Filled.BugReport, "YARA Rule Matches", scanResult.yaraMatchCount, SeverityCritical)
+        FindingRow(Icons.Filled.TrackChanges, "Trackers Detected", scanResult.trackerCount, SeverityMedium)
+        FindingRow(Icons.Filled.Link, "Embedded URLs", scanResult.urlCount, SeverityMedium)
+        FindingRow(Icons.Filled.Dns, "Embedded IPs", scanResult.ipCount, SeverityMedium)
+        FindingRow(Icons.Filled.Lock, "Native Libraries", scanResult.nativeLibCount, SeverityLow)
+    }
+}
+
+@Composable
+private fun FindingRow(icon: ImageVector, label: String, count: Int, defaultColor: androidx.compose.ui.graphics.Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (count > 0) defaultColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "$count",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = if (count > 0) defaultColor else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -243,6 +348,35 @@ private fun VulnerabilityCard(vulnerability: Vulnerability) {
     }
 }
 
+@Composable
+private fun RecommendationsCard(recommendations: List<String>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        ),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Recommendations",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            recommendations.forEach { rec ->
+                Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                    Text("→  ", color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(
+                        text = rec,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+        }
+    }
+}
+
 private val sampleResult = ScanResult(
     id = "1",
     apkName = "com.example.app-v2.3.apk",
@@ -250,6 +384,9 @@ private val sampleResult = ScanResult(
     versionName = "2.3",
     versionCode = 23,
     overallScore = 72,
+    severity = "LOW",
+    verdict = "REVIEW",
+    malwareFamily = null,
     severityCounts = mapOf(
         Severity.SAFE to 12,
         Severity.LOW to 3,

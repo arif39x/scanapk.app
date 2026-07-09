@@ -23,6 +23,8 @@ object ScanHistory {
                     versionName = "2.3",
                     versionCode = 23,
                     overallScore = 72,
+                    severity = "LOW",
+                    verdict = "REVIEW",
                     severityCounts = mapOf(
                         Severity.SAFE to 12,
                         Severity.LOW to 3,
@@ -40,6 +42,9 @@ object ScanHistory {
                     versionName = "1.0",
                     versionCode = 1,
                     overallScore = 45,
+                    severity = "MEDIUM",
+                    verdict = "DO_NOT_INSTALL",
+                    malwareFamily = "Riskware",
                     severityCounts = mapOf(
                         Severity.SAFE to 8,
                         Severity.LOW to 5,
