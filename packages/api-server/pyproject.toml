@@ -1,0 +1,9 @@
+[project]
+name = "scanapk-api-server"
+version = "0.1.0"
+description = "ScanAPK REST API Server"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.pytest.ini_options]
+markers = []

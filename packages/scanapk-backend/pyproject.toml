@@ -1,0 +1,12 @@
+[project]
+name = "scanapk-backend"
+version = "0.1.0"
+description = "APK Malware Analysis Engine"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (requires sample APKs / androguard)",
+]

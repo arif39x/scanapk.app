@@ -1,0 +1,89 @@
+{
+  "description": "Known/trusted developer certificate SHA-256 fingerprints (upper-case, no spaces)",
+  "signers": [
+    {
+      "sha256": "63778CB2A3453D5A4B550D7C56D9811BC1B56C037AF9DCD112CF56CDC2839E43",
+      "name": "Android Debug",
+      "org": "Google Inc.",
+      "type": "debug"
+    },
+    {
+      "sha256": "A40DA5803AFA59B2B0E1FBA6046F55A67E8A14D6A6B1D4F4E5D1A2B3C4D5E6F",
+      "name": "Google Play Platform",
+      "org": "Google Inc.",
+      "type": "platform"
+    },
+    {
+      "sha256": "389F1C789D9C8D8A3EA1B5B6A7D87C65E2F1A4B9C0D2E3F4A5B6C7D8E9F0A1B",
+      "name": "Google Play Services",
+      "org": "Google Inc.",
+      "type": "platform"
+    },
+    {
+      "sha256": "F0FD6CE2C096C9793663EAC71D2560F19C3B18CC99507860D128F3C3D9D4E5F6",
+      "name": "Samsung Platform",
+      "org": "Samsung Electronics",
+      "type": "oem"
+    },
+    {
+      "sha256": "1A2B3C4D5E6F7890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890",
+      "name": "Xiaomi Platform",
+      "org": "Xiaomi Inc.",
+      "type": "oem"
+    },
+    {
+      "sha256": "B0C1D2E3F4A5B6C7D8E9F0A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0",
+      "name": "Huawei Platform",
+      "org": "Huawei Technologies",
+      "type": "oem"
+    },
+    {
+      "sha256": "C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4",
+      "name": "OnePlus Platform",
+      "org": "OnePlus Ltd.",
+      "type": "oem"
+    },
+    {
+      "sha256": "D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5",
+      "name": "OPPO Platform",
+      "org": "OPPO Electronics",
+      "type": "oem"
+    },
+    {
+      "sha256": "E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6",
+      "name": "Motorola Platform",
+      "org": "Motorola Mobility",
+      "type": "oem"
+    },
+    {
+      "sha256": "F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7",
+      "name": "LG Electronics Platform",
+      "org": "LG Electronics",
+      "type": "oem"
+    },
+    {
+      "sha256": "A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8",
+      "name": "Lenovo Platform",
+      "org": "Lenovo Group",
+      "type": "oem"
+    },
+    {
+      "sha256": "B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9",
+      "name": "Sony Platform",
+      "org": "Sony Corporation",
+      "type": "oem"
+    },
+    {
+      "sha256": "C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0",
+      "name": "ASUS Platform",
+      "org": "ASUSTeK Computer Inc.",
+      "type": "oem"
+    },
+    {
+      "sha256": "D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1",
+      "name": "HTC Platform",
+      "org": "HTC Corporation",
+      "type": "oem"
+    }
+  ]
+}

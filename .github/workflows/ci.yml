@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install core
+        run: pip install -e packages/scanapk-backend
+      - name: Install API server
+        run: |
+          pip install -r packages/api-server/requirements.txt
+          pip install -e packages/api-server
+      - name: Run core tests
+        run: cd packages/scanapk-backend && python -m pytest tests/ -v -k "not slow"
+      - name: Run API tests
+        run: cd packages/api-server && python -m pytest tests/ -v
