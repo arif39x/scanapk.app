@@ -30,10 +30,9 @@ The platform consists of:
 <div align="center">
   <table>
     <tr>
-      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/docs/images/screen.png" alt="Home Screen" width="200"/></td>
-      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/docs/images/screen2.png" alt="Scan Results" width="200"/></td>
-      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/docs/images/screen3.png" alt="APK Details" width="200"/></td>
-      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/docs/images/screen4.png" alt="History" width="200"/></td>
+      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/assets/ui/1.jpeg" alt="Screenshot 1" width="200"/></td>
+      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/assets/ui/2.jpeg" alt="Screenshot 2" width="200"/></td>
+      <td><img src="https://raw.githubusercontent.com/arif39x/scanapk.app/main/assets/ui/3.jpeg" alt="Screenshot 3" width="200"/></td>
     </tr>
   </table>
 </div>
@@ -111,8 +110,8 @@ scanapk.app/
 │           ├── network/       # Retrofit API client
 │           ├── ui/            # Compose screens & components
 │           └── viewmodel/     # ScanViewModel
-├── docs/
-│   └── images/                # Screenshots for README
+├── assets/
+│   └── ui/                    # Screenshots for README
 ├── Makefile                   # Top-level commands
 └── run.sh                     # Unified launcher (backend + Android deploy)
 ```
